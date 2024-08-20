@@ -1,4 +1,4 @@
-package heronarts.lx.example.naga;
+package naga;
 
 import heronarts.lx.LX;
 import heronarts.lx.color.LXColor;

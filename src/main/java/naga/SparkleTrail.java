@@ -6,6 +6,7 @@ import heronarts.lx.parameter.CompoundParameter;
 import heronarts.lx.parameter.DiscreteParameter;
 import heronarts.lx.color.ColorParameter;
 import heronarts.lx.pattern.LXPattern;
+import heronarts.lx.model.LXPoint;
 
 import java.util.Random;
 
@@ -47,15 +48,17 @@ public class SparkleTrail extends LXPattern {
             .setDescription("Fifth color for sparkles");
 
     private final Random random = new Random();
-    private final float[] pulsePositions;
+    private final float[] pulsePositions; // z-coordinate positions for the trails
     private final double[] sparkleTimers;
     private final float[][] sparkleDurations;
+    private final float maxZ;
 
     public SparkleTrail(LX lx) {
         super(lx);
         pulsePositions = new float[5]; // Maximum of 5 trails
         sparkleTimers = new double[5];
         sparkleDurations = new float[5][model.size];
+        maxZ = model.zMax;
 
         addParameter("intensity", this.intensity);
         addParameter("speed", this.speed);
@@ -78,13 +81,15 @@ public class SparkleTrail extends LXPattern {
         int trailsToUse = numTrails.getValuei();
 
         for (int t = 0; t < trailsToUse; t++) {
-            pulsePositions[t] += speed.getValuef() * deltaMs / 1000.0f * model.size;
-            pulsePositions[t] = (pulsePositions[t] + model.size) % model.size; // Ensure position wraps around
+            pulsePositions[t] += speed.getValuef() * deltaMs / 1000.0f * 100; // Adjust speed by scale
+            pulsePositions[t] = pulsePositions[t] % maxZ; // Ensure position wraps within the z-coordinate range
 
             sparkleTimers[t] += deltaMs * sparkleRate.getValuef();
 
             for (int i = 0; i < model.size; i++) {
-                float distanceFromPulse = Math.abs(pulsePositions[t] - i);
+                LXPoint p = model.points[i];
+                float distanceFromPulse = Math.abs(p.z - pulsePositions[t]);
+
                 if (distanceFromPulse < length.getValuef()) {
                     float brightness = Math.max(0, 1.0f - (distanceFromPulse / length.getValuef()));
 

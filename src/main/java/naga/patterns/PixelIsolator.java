@@ -31,7 +31,7 @@ public class PixelIsolator extends LXPattern {
                 int end = Math.min(start + nPixels.getValuei(), model.size);
 
                 // loop through and make all the pixels black unless they are in the range
-                for (int i = 0; i < model.size; i++) {
+                for (int i = 0; i < colors.length; i++) {
                         if (i < start || i >= end) {
                                 colors[i] = LXColor.BLACK;
                         } else {

@@ -28,7 +28,7 @@ public class PixelIsolator extends LXPattern {
         @Override
         public void run(double deltaMs) {
                 int start = startPixel.getValuei();
-                int end = Math.min(start + nPixels.getValuei(), model.size);
+                int end = Math.min(start + nPixels.getValuei(), colors.length);
 
                 // loop through and make all the pixels black unless they are in the range
                 for (int i = 0; i < colors.length; i++) {

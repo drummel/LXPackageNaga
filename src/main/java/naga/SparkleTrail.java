@@ -7,6 +7,7 @@ import heronarts.lx.parameter.DiscreteParameter;
 import heronarts.lx.color.ColorParameter;
 import heronarts.lx.pattern.LXPattern;
 import heronarts.lx.model.LXPoint;
+import heronarts.lx.model.LXView;
 
 import java.util.Random;
 
@@ -36,28 +37,29 @@ public class SparkleTrail extends LXPattern {
     final CompoundParameter hueRotation = new CompoundParameter("HueRotation", 0, 0, 1)
             .setDescription("Randomly shifts the hue of the selected color by this amount");
 
-    final ColorParameter color1 = new ColorParameter("Color1", LXColor.hsb(30, 100, 100)) // Orange
+    // A nice selection of colors for the sparkles
+    final ColorParameter color1 = new ColorParameter("Color1", LXColor.WHITE) // White
             .setDescription("Primary color for sparkles");
-    final ColorParameter color2 = new ColorParameter("Color2", LXColor.hsb(60, 100, 100)) // Yellow
+    final ColorParameter color2 = new ColorParameter("Color2", LXColor.hsb(60, 80, 100)) // Light Yellow
             .setDescription("Secondary color for sparkles");
-    final ColorParameter color3 = new ColorParameter("Color3", LXColor.hsb(0, 100, 100)) // Red
-            .setDescription("Third color for sparkles");
-    final ColorParameter color4 = new ColorParameter("Color4", LXColor.hsb(20, 100, 100)) // Warm Orange
+    final ColorParameter color3 = new ColorParameter("Color3", LXColor.hsb(200, 80, 100)) // Light Blue
+            .setDescription("Third color for sparkles").setDescription("Third color for sparkles");
+    final ColorParameter color4 = new ColorParameter("Color4", LXColor.hsb(120, 80, 100)) // Light Green
             .setDescription("Fourth color for sparkles");
-    final ColorParameter color5 = new ColorParameter("Color5", LXColor.hsb(10, 100, 100)) // Deep Red
+    final ColorParameter color5 = new ColorParameter("Color5", LXColor.hsb(150, 100, 100)) // Light Purple
             .setDescription("Fifth color for sparkles");
 
     private final Random random = new Random();
     private final float[] pulsePositions; // z-coordinate positions for the trails
     private final double[] sparkleTimers;
-    private final float[][] sparkleDurations;
+    private float[][] sparkleDurations;
     private final float maxZ;
 
     public SparkleTrail(LX lx) {
         super(lx);
         pulsePositions = new float[5]; // Maximum of 5 trails
         sparkleTimers = new double[5];
-        sparkleDurations = new float[5][model.size];
+        sparkleDurations = new float[5][model.points.length];
         maxZ = model.zMax;
 
         addParameter("intensity", this.intensity);
@@ -77,16 +79,20 @@ public class SparkleTrail extends LXPattern {
 
     @Override
     public void run(double deltaMs) {
+        // if sparkle durations is null, initialize it
+        if (sparkleDurations == null) {
+            sparkleDurations = new float[5][colors.length];
+        }
         int colorsToUse = numColors.getValuei();
         int trailsToUse = numTrails.getValuei();
 
         for (int t = 0; t < trailsToUse; t++) {
-            pulsePositions[t] += speed.getValuef() * deltaMs / 1000.0f * 100; // Adjust speed by scale
+            pulsePositions[t] += speed.getValuef() * deltaMs / 1000.0f * 100.0; // Adjust speed by scale
             pulsePositions[t] = pulsePositions[t] % maxZ; // Ensure position wraps within the z-coordinate range
 
             sparkleTimers[t] += deltaMs * sparkleRate.getValuef();
 
-            for (int i = 0; i < model.size; i++) {
+            for (int i = 0; i < model.points.length; i++) {
                 LXPoint p = model.points[i];
                 float distanceFromPulse = Math.abs(p.z - pulsePositions[t]);
 
@@ -95,9 +101,11 @@ public class SparkleTrail extends LXPattern {
 
                     // Determine if this point should sparkle and for how long
                     if (sparkleDurations[t][i] <= 0 && random.nextFloat() < density.getValuef() * brightness) {
+                        // Set the color and duration of the sparkle
                         colors[i] = LXColor.scaleBrightness(applyHueRotation(getRandomColor(colorsToUse)),
                                 intensity.getValuef() * brightness);
-                        sparkleDurations[t][i] = (float) (1 / sparkleRate.getValuef()); // Set duration of the sparkle
+                        sparkleDurations[t][i] = (float) (1 / sparkleRate.getValuef());
+                        // If the sparkle is still active, update the color
                     } else if (sparkleDurations[t][i] > 0) {
                         sparkleDurations[t][i] -= deltaMs;
                         colors[i] = LXColor.scaleBrightness(applyHueRotation(getRandomColor(colorsToUse)),
